@@ -130,7 +130,7 @@ func Run() {
 		// Initialize cmd.Flag to have the same default error handling as
 		// flag.CommandLine, in case cmd.UsageFunc is specified and it does
 		// not call Exit.
-		cmd.Flag.Init("", flag.ExitOnError)
+		cmd.Flag.Init("", flag.CommandLine.ErrorHandling())
 		cmd.Flag.Usage = func() { cmd.Usage() }
 		if cmd.CustomFlags {
 			args = args[1:]
