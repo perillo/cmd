@@ -15,7 +15,6 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strings"
 )
 
 // A Command is an implementation of a single command.
@@ -26,6 +25,9 @@ type Command struct {
 
 	// UsageFunc will replace Command.Usage, if specified.
 	UsageFunc func()
+
+	// Name is the command name
+	Name string
 
 	// UsageLine is the one-line usage message.
 	UsageLine string
@@ -46,28 +48,20 @@ type Command struct {
 	// The order here is the order in which they are printed by 'cmd -help'.
 	// Note that subcommands are in general best avoided.
 	Commands []*Command
+
+	// parent is the parent of this command.
+	parent *Command
 }
 
-// LongName returns the command's long name: all the words in the usage line
-// between cmd Name and a flag or argument,
+// LongName returns the command's long name.
 func (c *Command) LongName() string {
-	name := c.UsageLine
-	if i := strings.Index(name, " ["); i >= 0 {
-		name = name[:i]
-	}
-	if name == Name {
-		return ""
+	if c.parent == nil {
+		return "" // avoid panic if called on the main command
 	}
 
-	return strings.TrimPrefix(name, Name+" ")
-}
-
-// Name returns the command's short name: the last word in the usage line
-// before a flag or argument.
-func (c *Command) Name() string {
-	name := c.LongName()
-	if i := strings.LastIndex(name, " "); i >= 0 {
-		name = name[i+1:]
+	name := c.Name
+	for cmd := c.parent; cmd.parent != nil; cmd = cmd.parent {
+		name = cmd.Name + " " + name
 	}
 
 	return name
@@ -125,12 +119,13 @@ func Run() {
 
 	// TODO(mperillo): Sub commands are not currently supported.
 	for _, cmd := range Main.Commands {
-		if cmd.Name() != args[0] {
+		if cmd.Name != args[0] {
 			continue
 		}
 		if !cmd.Runnable() {
 			continue
 		}
+		cmd.parent = Main
 
 		// Initialize cmd.Flag to have the same default error handling as
 		// flag.CommandLine, in case cmd.UsageFunc is specified and it does
@@ -150,14 +145,11 @@ func Run() {
 		return
 	}
 
-	fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Name, args[0])
-	fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", Name)
+	fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
+	fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", Main.Name)
 	SetExitStatus(2)
 	Exit()
 }
-
-// Name is the main command name.
-var Name string
 
 // Main is the main command.
 //
