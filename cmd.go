@@ -22,7 +22,7 @@ import (
 // ErrNoCommand is returned by Parse when no command was provided.
 var ErrNoCommand = errors.New("no command")
 
-// ErrUnknowCommand is returned by Parse when an unknown command was provided.
+// ErrUnknownCommand is returned by Parse when an unknown command was provided.
 var ErrUnknownCommand = errors.New("unknown command")
 
 // A Command is an implementation of a single command.
@@ -34,7 +34,7 @@ type Command struct {
 	// UsageFunc will replace Command.Usage, if specified.
 	UsageFunc func()
 
-	// Name is the command name
+	// Name is the command name.
 	Name string
 
 	// UsageLine is the one-line usage message.
