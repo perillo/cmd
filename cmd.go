@@ -12,10 +12,18 @@
 package cmd
 
 import (
+	"errors"
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
 )
+
+// ErrNoCommand is returned by Parse when no command was provided.
+var ErrNoCommand = errors.New("no command")
+
+// ErrUnknowCommand is returned by Parse when an unknown command was provided.
+var ErrUnknownCommand = errors.New("unknown command")
 
 // A Command is an implementation of a single command.
 type Command struct {
@@ -73,7 +81,7 @@ func (c *Command) Runnable() bool {
 }
 
 // defaultUsage prints a usage message documenting all defined command-line
-// flags to os.Stderr and exit with an exit status 2.
+// flags to os.Stderr.
 func (c *Command) defaultUsage() {
 	fmt.Fprintf(os.Stderr, "usage: %s\n", c.UsageLine)
 	c.Flag.PrintDefaults()
@@ -97,24 +105,27 @@ func (c *Command) Usage() {
 	}
 
 	c.defaultUsage()
-
-	// Exit as a convenience in case Usage is called by the user, instead of
-	// the flag package.
-	SetExitStatus(2)
-	Exit()
 }
 
-// Run parses the command-line from os.Args[1:] and execute the appropriate
-// sub command of the Main command.
-func Run() {
-	flag.Usage = Main.Usage
-	flag.Parse()
+// Parse parses command-line from argument list, which should not include
+// the command name, and return the selected Command and arguments.  Must be
+// called after all flags in cmdline are defined and before flags are accessed
+// by the program.  The return value will be ErrHelp if -help or -h were set
+// but not defined.
+func Parse(main *Command, cmdline *flag.FlagSet, argv []string) (
+	*Command, []string, error) {
 
-	args := flag.Args()
+	// Configure cmdline so that errors and output are in our control.
+	cmdline.Init("", flag.ContinueOnError)
+	cmdline.Usage = func() {}
+	cmdline.SetOutput(ioutil.Discard)
+	if err := cmdline.Parse(argv); err != nil {
+		return main, nil, err
+	}
+
+	args := cmdline.Args()
 	if len(args) < 1 {
-		Main.Usage()
-
-		return // in case Main.Usage does not call Exit
+		return main, args, ErrNoCommand
 	}
 
 	// TODO(mperillo): Sub commands are not currently supported.
@@ -125,33 +136,61 @@ func Run() {
 		if !cmd.Runnable() {
 			continue
 		}
-		cmd.parent = Main
+		cmd.parent = main
 
-		// Initialize cmd.Flag to have the same default error handling as
-		// flag.CommandLine, in case cmd.UsageFunc is specified and it does
-		// not call Exit.
-		cmd.Flag.Init("", flag.CommandLine.ErrorHandling())
-		cmd.Flag.Usage = func() { cmd.Usage() }
+		// Configure cmd.Flag as it was done with cmdline, but restore the
+		// output when returning, since cmd.Usage requires it.
+		cmd.Flag.Init("", flag.ContinueOnError)
+		cmd.Flag.Usage = func() {}
+		defer disable(&cmd.Flag)()
 		if cmd.CustomFlags {
 			args = args[1:]
 		} else {
-			cmd.Flag.Parse(args[1:]) // will call os.Exit(2) in case of errors
+			if err := cmd.Flag.Parse(args[1:]); err != nil {
+				return cmd, nil, err
+			}
 			args = cmd.Flag.Args()
 		}
 
-		cmd.Run(cmd, args)
-		Exit()
-
-		return
+		return cmd, args, nil
 	}
 
-	fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
-	fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", Main.Name)
-	SetExitStatus(2)
+	return main, cmdline.Args(), ErrUnknownCommand
+}
+
+func disable(f *flag.FlagSet) (enable func()) {
+	w := f.Output()
+	f.SetOutput(ioutil.Discard)
+
+	return func() {
+		f.SetOutput(w)
+	}
+}
+
+// Run parses the command-line from os.Args[1:] and execute the appropriate
+// sub command of the Main command.
+func Run() {
+	cmd, args, err := Parse(Main, flag.CommandLine, os.Args[1:])
+	switch {
+	case err == ErrUnknownCommand:
+		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
+		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", Main.Name)
+	case err == flag.ErrHelp:
+		cmd.Usage()
+	case err != nil:
+		fmt.Fprintf(os.Stderr, "%s: %v\n", Main.Name, err)
+		cmd.Usage()
+	}
+	if err != nil {
+		SetExitStatus(2)
+		Exit()
+	}
+
+	cmd.Run(cmd, args)
 	Exit()
 }
 
 // Main is the main command.
 //
-// UsageLine and Long fields should be set by the user.
+// Name, UsageLine and Long fields should be set by the user.
 var Main = &Command{}
