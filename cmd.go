@@ -112,18 +112,15 @@ func (c *Command) Usage() {
 // called after all flags in cmdline are defined and before flags are accessed
 // by the program.  The return value will be ErrHelp if -help or -h were set
 // but not defined.
-func Parse(main *Command, cmdline *flag.FlagSet, argv []string) (
-	*Command, []string, error) {
-
-	// Configure cmdline so that errors and output are in our control.
-	cmdline.Init("", flag.ContinueOnError)
-	cmdline.Usage = func() {}
-	cmdline.SetOutput(ioutil.Discard)
-	if err := cmdline.Parse(argv); err != nil {
+func Parse(main *Command, argv []string) (*Command, []string, error) {
+	// Configure main.Flag so that errors and output are in our control, but
+	// restore the output when returning, since Usage will require it.
+	defer configure(&main.Flag)()
+	if err := main.Flag.Parse(argv); err != nil {
 		return main, nil, err
 	}
 
-	args := cmdline.Args()
+	args := main.Flag.Args()
 	if len(args) < 1 {
 		return main, args, ErrNoCommand
 	}
@@ -138,11 +135,8 @@ func Parse(main *Command, cmdline *flag.FlagSet, argv []string) (
 		}
 		cmd.parent = main
 
-		// Configure cmd.Flag as it was done with cmdline, but restore the
-		// output when returning, since cmd.Usage requires it.
-		cmd.Flag.Init("", flag.ContinueOnError)
-		cmd.Flag.Usage = func() {}
-		defer disable(&cmd.Flag)()
+		// Configure cmd.Flag as it was done with main.Flag.
+		defer configure(&cmd.Flag)()
 		if cmd.CustomFlags {
 			args = args[1:]
 		} else {
@@ -155,10 +149,16 @@ func Parse(main *Command, cmdline *flag.FlagSet, argv []string) (
 		return cmd, args, nil
 	}
 
-	return main, cmdline.Args(), ErrUnknownCommand
+	return main, main.Flag.Args(), ErrUnknownCommand
 }
 
-func disable(f *flag.FlagSet) (enable func()) {
+// configure configures f so that error handling is set to continue on errors
+// and the output is temporarily disabled.  Calling the returned restore
+// function will restore it the original value.
+func configure(f *flag.FlagSet) (restore func()) {
+	f.Init("", flag.ContinueOnError)
+	f.Usage = func() {}
+
 	w := f.Output()
 	f.SetOutput(ioutil.Discard)
 
@@ -170,7 +170,7 @@ func disable(f *flag.FlagSet) (enable func()) {
 // Run parses the command-line from os.Args[1:] and execute the appropriate
 // sub command of the Main command.
 func Run() {
-	cmd, args, err := Parse(Main, flag.CommandLine, os.Args[1:])
+	cmd, args, err := Parse(Main, os.Args[1:])
 	switch {
 	case err == ErrUnknownCommand:
 		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
