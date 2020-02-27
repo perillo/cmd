@@ -84,7 +84,7 @@ func (c *Command) defaultUsage() {
 	if len(c.Commands) > 0 {
 		fmt.Fprint(os.Stderr, "\ncommands:\n\n")
 		for _, cmd := range c.Commands {
-			fmt.Fprintf(os.Stderr, "\t%s    %s\n", cmd.LongName(), cmd.Short)
+			fmt.Fprintf(os.Stderr, "\t%-11s %s\n", cmd.Name, cmd.Short)
 		}
 	}
 }
