@@ -80,19 +80,27 @@ func (c *Command) Runnable() bool {
 	return c.Run != nil
 }
 
+func (c *Command) print(a ...interface{}) {
+	fmt.Fprint(c.Flag.Output(), a...)
+}
+
+func (c *Command) printf(format string, a ...interface{}) {
+	fmt.Fprintf(c.Flag.Output(), format, a...)
+}
+
 // defaultUsage prints a usage message documenting all defined command-line
 // flags to os.Stderr.
 func (c *Command) defaultUsage() {
-	fmt.Fprintf(os.Stderr, "usage: %s\n", c.UsageLine)
+	c.printf("usage: %s\n", c.UsageLine)
 	c.Flag.PrintDefaults()
 	if c.Long != "" {
-		fmt.Fprintf(os.Stderr, "\n%s\n", c.Long)
+		c.printf("\n%s\n", c.Long)
 	}
 
 	if len(c.Commands) > 0 {
-		fmt.Fprint(os.Stderr, "\ncommands:\n\n")
+		c.print("\ncommands:\n\n")
 		for _, cmd := range c.Commands {
-			fmt.Fprintf(os.Stderr, "\t%-11s %s\n", cmd.Name, cmd.Short)
+			c.printf("\t%-11s %s\n", cmd.Name, cmd.Short)
 		}
 	}
 }
