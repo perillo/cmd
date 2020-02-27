@@ -112,17 +112,17 @@ func (c *Command) Usage() {
 // called after all flags in cmdline are defined and before flags are accessed
 // by the program.  The return value will be ErrHelp if -help or -h were set
 // but not defined.
-func Parse(main *Command, argv []string) (*Command, []string, error) {
+func Parse(main *Command, argv []string) (*Command, error) {
 	// Configure main.Flag so that errors and output are in our control, but
 	// restore the output when returning, since Usage will require it.
 	defer configure(&main.Flag)()
 	if err := main.Flag.Parse(argv); err != nil {
-		return main, nil, err
+		return main, err
 	}
 
 	args := main.Flag.Args()
 	if len(args) < 1 {
-		return main, args, ErrNoCommand
+		return main, ErrNoCommand
 	}
 
 	// TODO(mperillo): Sub commands are not currently supported.
@@ -141,15 +141,14 @@ func Parse(main *Command, argv []string) (*Command, []string, error) {
 			args = args[1:]
 		} else {
 			if err := cmd.Flag.Parse(args[1:]); err != nil {
-				return cmd, nil, err
+				return cmd, err
 			}
-			args = cmd.Flag.Args()
 		}
 
-		return cmd, args, nil
+		return cmd, nil
 	}
 
-	return main, main.Flag.Args(), ErrUnknownCommand
+	return main, ErrUnknownCommand
 }
 
 // configure configures f so that error handling is set to continue on errors
@@ -170,7 +169,8 @@ func configure(f *flag.FlagSet) (restore func()) {
 // Run parses the command-line from os.Args[1:] and execute the appropriate
 // sub command of the Main command.
 func Run() {
-	cmd, args, err := Parse(Main, os.Args[1:])
+	cmd, err := Parse(Main, os.Args[1:])
+	args := cmd.Flag.Args()
 	switch {
 	case err == ErrUnknownCommand:
 		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
