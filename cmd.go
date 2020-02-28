@@ -133,8 +133,8 @@ func (c *Command) Usage() {
 // were set but not defined.
 func Parse(main *Command, argv []string) (*Command, error) {
 	// Configure main.Flag so that errors and output are in our control, but
-	// restore the output when returning, since Usage will require it.
-	defer configure(&main.Flag)()
+	// restore the output when returning, since Command.Usage will require it.
+	defer configure(main)()
 	if err := main.Flag.Parse(argv); err != nil {
 		return main, err
 	}
@@ -155,7 +155,7 @@ func Parse(main *Command, argv []string) (*Command, error) {
 		cmd.parent = main
 
 		// Configure cmd.Flag as it was done with main.Flag.
-		defer configure(&cmd.Flag)()
+		defer configure(cmd)()
 		if cmd.CustomFlags {
 			args = args[1:]
 		} else {
@@ -170,18 +170,20 @@ func Parse(main *Command, argv []string) (*Command, error) {
 	return main, ErrUnknownCommand
 }
 
-// configure configures f so that error handling is set to continue on errors
-// and the output is temporarily disabled.  Calling the returned restore
-// function will restore it the original value.
-func configure(f *flag.FlagSet) (restore func()) {
-	f.Init("", flag.ContinueOnError)
-	f.Usage = func() {}
-
-	w := f.Output()
-	f.SetOutput(ioutil.Discard)
+// configure configures c so that c.Flag error handling is set to continue on
+// errors and its output is temporarily disabled.  Calling the returned restore
+// function will restore C.Flag.Output to os.Stderr and set c.Flag.Usage to
+// c.Usage.
+//
+// configure assumes that c.Flag has not been modified, so that c.Flag.Output()
+// is os.Stderr and c.Flag.Usage is nil.
+func configure(c *Command) (restore func()) {
+	c.Flag.Init(c.String(), flag.ContinueOnError)
+	c.Flag.SetOutput(ioutil.Discard)
 
 	return func() {
-		f.SetOutput(w)
+		c.Flag.Usage = c.Usage // this is not really necessary
+		c.Flag.SetOutput(nil)
 	}
 }
 
