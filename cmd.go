@@ -100,7 +100,7 @@ func (c *Command) printf(format string, a ...interface{}) {
 }
 
 // defaultUsage prints a usage message documenting all defined command-line
-// flags to os.Stderr.
+// flags and sub commands to os.Stderr.
 func (c *Command) defaultUsage() {
 	c.printf("usage: %s\n", c.UsageLine)
 	c.Flag.PrintDefaults()
