@@ -197,7 +197,7 @@ func Run() {
 	case err == flag.ErrHelp:
 		cmd.Usage()
 	case err != nil:
-		fmt.Fprintf(os.Stderr, "%s: %v\n", Main.Name, err)
+		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd, err)
 		cmd.Usage()
 	}
 	if err != nil {
