@@ -80,6 +80,17 @@ func (c *Command) Runnable() bool {
 	return c.Run != nil
 }
 
+// String implements the Stringer interface.
+func (c *Command) String() string {
+	// Return the full name of the command.
+	name := c.Name
+	for cmd := c.parent; cmd != nil; cmd = cmd.parent {
+		name = cmd.Name + " " + name
+	}
+
+	return name
+}
+
 func (c *Command) print(a ...interface{}) {
 	fmt.Fprint(c.Flag.Output(), a...)
 }

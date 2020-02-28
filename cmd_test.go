@@ -9,8 +9,8 @@ import (
 	"testing"
 )
 
-// TestLongName tests the Command.LongName method.
-func TestLongName(t *testing.T) {
+// TestCommandLongName tests the Command.LongName method.
+func TestCommandLongName(t *testing.T) {
 	var tests = []struct {
 		names []string
 		want  string
@@ -35,6 +35,37 @@ func TestLongName(t *testing.T) {
 			}
 
 			got := cmd.LongName()
+			if got != test.want {
+				t.Errorf("got %q, want %q", got, test.want)
+			}
+		})
+	}
+}
+
+// TestCommandString tests the Command.String method.
+func TestCommandString(t *testing.T) {
+	var tests = []struct {
+		names []string
+		want  string
+	}{
+		{[]string{"test"}, "test"},
+		{[]string{"test", "cmd"}, "test cmd"},
+		{[]string{"test", "cmd", "a"}, "test cmd a"},
+		{[]string{"test", "cmd", "a", "b"}, "test cmd a b"},
+	}
+
+	for _, test := range tests {
+		t.Run(mkname(test.want), func(t *testing.T) {
+			// Build the command and the subcommands.
+			var pcmd *Command
+			cmd := &Command{Name: "test"}
+			for _, name := range test.names {
+				cmd = &Command{Name: name}
+				cmd.parent = pcmd
+				pcmd = cmd
+			}
+
+			got := cmd.String()
 			if got != test.want {
 				t.Errorf("got %q, want %q", got, test.want)
 			}
