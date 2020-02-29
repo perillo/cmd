@@ -194,8 +194,8 @@ func Run() {
 	args := cmd.Flag.Args()
 	switch {
 	case err == ErrUnknownCommand:
-		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", Main.Name, args[0])
-		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", Main.Name)
+		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", cmd, args[0])
+		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", cmd)
 	case err == flag.ErrHelp:
 		cmd.Usage()
 	case err != nil:
