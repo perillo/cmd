@@ -31,8 +31,10 @@ type Command struct {
 	// The args are the arguments after the command name.
 	Run func(cmd *Command, args []string)
 
-	// UsageFunc will replace Command.Usage, if specified.
-	UsageFunc func()
+	// Usage prints the command usage to os.Stderr.  If not specified a default
+	// template will be used, printing UsageLine, followed by a call to
+	// Flag.PrintDefaults and a list of available sub commands.
+	Usage func()
 
 	// Name is the command name.
 	Name string
@@ -43,7 +45,7 @@ type Command struct {
 	// Short is the short description shown in the 'cmd -help' output.
 	Short string
 
-	// Long is the long message shown in the Command.Usage output.
+	// Long is the long message shown in the command default usage output.
 	Long string
 
 	// Flag is a set of flags specific to this command.
@@ -116,9 +118,9 @@ func (c *Command) defaultUsage() {
 	}
 }
 
-func (c *Command) Usage() {
-	if c.UsageFunc != nil {
-		c.UsageFunc()
+func (c *Command) usage() {
+	if c.Usage != nil {
+		c.Usage()
 
 		return
 	}
@@ -173,7 +175,7 @@ func Parse(main *Command, argv []string) (*Command, error) {
 // configure configures c so that c.Flag error handling is set to continue on
 // errors and its output is temporarily disabled.  Calling the returned restore
 // function will restore C.Flag.Output to os.Stderr and set c.Flag.Usage to
-// c.Usage.
+// c.usage.
 //
 // configure assumes that c.Flag has not been modified, so that c.Flag.Output()
 // is os.Stderr and c.Flag.Usage is nil.
@@ -182,7 +184,7 @@ func configure(c *Command) (restore func()) {
 	c.Flag.SetOutput(ioutil.Discard)
 
 	return func() {
-		c.Flag.Usage = c.Usage // this is not really necessary
+		c.Flag.Usage = c.usage // this is not really necessary
 		c.Flag.SetOutput(nil)
 	}
 }
@@ -197,10 +199,10 @@ func Run() {
 		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", cmd, args[0])
 		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", cmd)
 	case err == flag.ErrHelp:
-		cmd.Usage()
+		cmd.usage()
 	case err != nil:
 		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd, err)
-		cmd.Usage()
+		cmd.usage()
 	}
 	if err != nil {
 		SetExitStatus(2)
