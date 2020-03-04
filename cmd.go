@@ -39,7 +39,9 @@ type Command struct {
 	// Name is the command name.
 	Name string
 
-	// UsageLine is the one-line usage message.
+	// UsageLine is the one-line usage message.  The message must not contain
+	// the command name, since it will be added automatically in the default
+	// usage template.
 	UsageLine string
 
 	// Short is the short description shown in the 'cmd -help' output.
@@ -104,7 +106,7 @@ func (c *Command) printf(format string, a ...interface{}) {
 // defaultUsage prints a usage message documenting all defined command-line
 // flags and sub commands to os.Stderr.
 func (c *Command) defaultUsage() {
-	c.printf("usage: %s\n", c.UsageLine)
+	c.printf("usage: %s %s\n", c, c.UsageLine)
 	c.Flag.PrintDefaults()
 	if c.Long != "" {
 		c.printf("\n%s\n", c.Long)
