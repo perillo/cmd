@@ -195,14 +195,18 @@ func configure(c *Command) (restore func()) {
 // sub command of the Main command.
 func Run() {
 	cmd, err := Parse(Main, os.Args[1:])
+	osname := os.Args[0] // follow UNIX cmd -h convention
 	args := cmd.Flag.Args()
 	switch {
 	case err == ErrUnknownCommand:
+		Main.Name = osname
 		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", cmd, args[0])
 		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", cmd)
 	case err == flag.ErrHelp:
+		Main.Name = osname
 		cmd.usage()
 	case err != nil:
+		Main.Name = osname
 		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd, err)
 		cmd.usage()
 	}
