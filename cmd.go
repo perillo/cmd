@@ -131,10 +131,11 @@ func (c *Command) usage() {
 }
 
 // Parse parses command-line from argument list, which should not include
-// the command name, and return the selected Command and arguments.  Must be
-// called after all flags in main.Flag are defined and before flags are
-// accessed by the program.  The return value will be ErrHelp if -help or -h
-// were set but not defined.
+// the main command name, and return the selected Command.
+//
+// Parse must be called after all flags in main.Flag are defined and before
+// flags are accessed by the program.  The return value will be flag.ErrHelp if
+// -help or -h were set but not defined.
 func Parse(main *Command, argv []string) (*Command, error) {
 	// Configure main.Flag so that errors and output are in our control, but
 	// restore the output when returning, since Command.Usage will require it.
