@@ -19,6 +19,13 @@ import (
 	"os"
 )
 
+// Standard Posix exit status constants.
+const (
+	ExitSuccess = iota
+	ExitFailure
+	ExitUsageError
+)
+
 // ErrNoCommand is returned by Parse when no command was provided.
 var ErrNoCommand = errors.New("no command")
 
@@ -194,7 +201,7 @@ func configure(c *Command) (restore func()) {
 
 // Run parses the command-line from os.Args[1:] and execute the appropriate
 // sub command of main.  It returns the status code returned by Command.Run or
-// 2 in case of parsing error.
+// ExitUsageError in case of parsing error.
 func Run(main *Command) int {
 	cmd, err := Parse(main, os.Args[1:])
 	osname := os.Args[0] // follow UNIX cmd -h convention
@@ -213,7 +220,7 @@ func Run(main *Command) int {
 		cmd.usage()
 	}
 	if err != nil {
-		return 2
+		return ExitUsageError
 	}
 
 	return cmd.Run(cmd, args)
