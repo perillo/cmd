@@ -27,9 +27,9 @@ var ErrUnknownCommand = errors.New("unknown command")
 
 // A Command is an implementation of a single command.
 type Command struct {
-	// Run runs the command.
+	// Run runs the command and returns the exit status.
 	// The args are the arguments after the command name.
-	Run func(cmd *Command, args []string)
+	Run func(cmd *Command, args []string) int
 
 	// Usage prints the command usage to os.Stderr.  If not specified a default
 	// template will be used, printing UsageLine, followed by a call to
@@ -193,8 +193,9 @@ func configure(c *Command) (restore func()) {
 }
 
 // Run parses the command-line from os.Args[1:] and execute the appropriate
-// sub command of main.
-func Run(main *Command) {
+// sub command of main.  It returns the status code returned by Command.Run or
+// 2 in case of parsing error.
+func Run(main *Command) int {
 	cmd, err := Parse(main, os.Args[1:])
 	osname := os.Args[0] // follow UNIX cmd -h convention
 	args := cmd.Flag.Args()
@@ -212,10 +213,8 @@ func Run(main *Command) {
 		cmd.usage()
 	}
 	if err != nil {
-		SetExitStatus(2)
-		Exit()
+		return 2
 	}
 
-	cmd.Run(cmd, args)
-	Exit()
+	return cmd.Run(cmd, args)
 }
