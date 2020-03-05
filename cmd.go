@@ -149,7 +149,7 @@ func Parse(main *Command, argv []string) (*Command, error) {
 	}
 
 	// TODO(mperillo): Sub commands are not currently supported.
-	for _, cmd := range Main.Commands {
+	for _, cmd := range main.Commands {
 		if cmd.Name != args[0] {
 			continue
 		}
