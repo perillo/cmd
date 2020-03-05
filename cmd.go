@@ -192,21 +192,21 @@ func configure(c *Command) (restore func()) {
 }
 
 // Run parses the command-line from os.Args[1:] and execute the appropriate
-// sub command of the Main command.
-func Run() {
-	cmd, err := Parse(Main, os.Args[1:])
+// sub command of main.
+func Run(main *Command) {
+	cmd, err := Parse(main, os.Args[1:])
 	osname := os.Args[0] // follow UNIX cmd -h convention
 	args := cmd.Flag.Args()
 	switch {
 	case err == ErrUnknownCommand:
-		Main.Name = osname
+		main.Name = osname
 		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", cmd, args[0])
 		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", cmd)
 	case err == flag.ErrHelp:
-		Main.Name = osname
+		main.Name = osname
 		cmd.usage()
 	case err != nil:
-		Main.Name = osname
+		main.Name = osname
 		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd, err)
 		cmd.usage()
 	}
@@ -218,8 +218,3 @@ func Run() {
 	cmd.Run(cmd, args)
 	Exit()
 }
-
-// Main is the main command.
-//
-// Name, UsageLine and Long fields should be set by the user.
-var Main = &Command{}
