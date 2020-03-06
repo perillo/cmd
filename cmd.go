@@ -161,9 +161,6 @@ func Parse(main *Command, argv []string) (*Command, error) {
 		if cmd.Name != args[0] {
 			continue
 		}
-		if !cmd.Runnable() {
-			continue
-		}
 		cmd.parent = main
 
 		// Configure cmd.Flag as it was done with main.Flag.
@@ -220,6 +217,11 @@ func Run(main *Command) int {
 		cmd.usage()
 	}
 	if err != nil {
+		return ExitUsageError
+	}
+	if !cmd.Runnable() {
+		fmt.Fprintf(os.Stderr, "%s: not runnable\n", cmd)
+
 		return ExitUsageError
 	}
 
