@@ -26,10 +26,15 @@ const (
 	ExitUsageError
 )
 
-// ErrNoCommand is returned by Parse when no command was provided.
+// ErrHelp is the error returned by Parse if the -help or -h flag is invoked
+// but no such flag is defined.
+var ErrHelp = flag.ErrHelp
+
+// ErrNoCommand is the error returned by Parse when no command is invoked.
 var ErrNoCommand = errors.New("no command")
 
-// ErrUnknownCommand is returned by Parse when an unknown command was provided.
+// ErrUnknownCommand is the error returned by Parse when an unknown command is
+// invoked.
 var ErrUnknownCommand = errors.New("unknown command")
 
 // A Command is an implementation of a single command.
