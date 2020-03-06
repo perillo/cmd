@@ -23,17 +23,7 @@ func TestCommandLongName(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(mkname(test.want), func(t *testing.T) {
-			// Build the command and the subcommands.
-			var (
-				pcmd *Command
-				cmd  *Command
-			)
-			for _, name := range test.names {
-				cmd = &Command{Name: name}
-				cmd.parent = pcmd
-				pcmd = cmd
-			}
-
+			cmd := buildp(test.names)
 			got := cmd.LongName()
 			if got != test.want {
 				t.Errorf("got %q, want %q", got, test.want)
@@ -56,21 +46,25 @@ func TestCommandString(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(mkname(test.want), func(t *testing.T) {
-			// Build the command and the subcommands.
-			var pcmd *Command
-			cmd := &Command{Name: "test"}
-			for _, name := range test.names {
-				cmd = &Command{Name: name}
-				cmd.parent = pcmd
-				pcmd = cmd
-			}
-
+			cmd := buildp(test.names)
 			got := cmd.String()
 			if got != test.want {
 				t.Errorf("got %q, want %q", got, test.want)
 			}
 		})
 	}
+}
+
+// buildp returns a command tree, with the parent field set correctly.
+func buildp(tree []string) *Command {
+	var parent, cmd *Command
+	for _, name := range tree {
+		cmd = &Command{Name: name}
+		cmd.parent = parent
+		parent = cmd
+	}
+
+	return cmd
 }
 
 // mkname returns a suitable name to use for a sub test.
