@@ -88,6 +88,27 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// TestParseFlag tests the Parse function, with a flag and an argument.
+func TestParseFlag(t *testing.T) {
+	tree := list{"test", "cmd"}
+	argv := list{"test", "cmd", "-flag", "arg"}
+
+	main := build(tree)
+	flag := main.Commands[0].Flag.Bool("flag", false, "flag")
+
+	cmd, err := Parse(main, argv[1:])
+	arg := cmd.Flag.Arg(0)
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if !*flag {
+		t.Errorf("flag not set")
+	}
+	if arg != "arg" {
+		t.Errorf("got argument %q, want %q", arg, "arg")
+	}
+}
+
 // buildp returns a command tree, with the parent field set correctly.
 func buildp(tree []string) *Command {
 	var parent, cmd *Command
