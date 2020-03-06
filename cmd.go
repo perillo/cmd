@@ -107,27 +107,19 @@ func (c *Command) String() string {
 	return name
 }
 
-func (c *Command) print(a ...interface{}) {
-	fmt.Fprint(c.Flag.Output(), a...)
-}
-
-func (c *Command) printf(format string, a ...interface{}) {
-	fmt.Fprintf(c.Flag.Output(), format, a...)
-}
-
 // defaultUsage prints a usage message documenting all defined command-line
 // flags and sub commands to os.Stderr.
 func (c *Command) defaultUsage() {
-	c.printf("usage: %s %s\n", c, c.UsageLine)
+	printf("usage: %s %s\n", c, c.UsageLine)
 	c.Flag.PrintDefaults()
 	if c.Long != "" {
-		c.printf("\n%s\n", c.Long)
+		printf("\n%s\n", c.Long)
 	}
 
 	if len(c.Commands) > 0 {
-		c.print("\ncommands:\n\n")
+		print("\ncommands:\n\n")
 		for _, cmd := range c.Commands {
-			c.printf("\t%-11s %s\n", cmd.Name, cmd.Short)
+			printf("\t%-11s %s\n", cmd.Name, cmd.Short)
 		}
 	}
 }
@@ -202,6 +194,14 @@ func configure(c *Command) (restore func()) {
 	}
 }
 
+func print(args ...interface{}) {
+	fmt.Fprint(os.Stderr, args...)
+}
+
+func printf(format string, args ...interface{}) {
+	fmt.Fprintf(os.Stderr, format, args...)
+}
+
 // Run parses the command-line from os.Args[1:] and execute the appropriate
 // sub command of main.  It returns the status code returned by Command.Run or
 // ExitUsageError in case of parsing error.
@@ -212,21 +212,21 @@ func Run(main *Command) int {
 	switch {
 	case err == ErrUnknownCommand:
 		main.Name = osname
-		fmt.Fprintf(os.Stderr, "%s %s: unknown command\n", cmd, args[0])
-		fmt.Fprintf(os.Stderr, "Run '%s -help' for usage.\n", cmd)
+		printf("%s %s: unknown command\n", cmd, args[0])
+		printf("Run '%s -help' for usage.\n", cmd)
 	case err == flag.ErrHelp:
 		main.Name = osname
 		cmd.usage()
 	case err != nil:
 		main.Name = osname
-		fmt.Fprintf(os.Stderr, "%s: %v\n", cmd, err)
+		printf("%s: %v\n", cmd, err)
 		cmd.usage()
 	}
 	if err != nil {
 		return ExitUsageError
 	}
 	if !cmd.Runnable() {
-		fmt.Fprintf(os.Stderr, "%s: not runnable\n", cmd)
+		printf("%s: not runnable\n", cmd)
 
 		return ExitUsageError
 	}
