@@ -57,6 +57,37 @@ func TestCommandString(t *testing.T) {
 	}
 }
 
+// TestParse tests the Parse function.
+func TestParse(t *testing.T) {
+	var tests = []struct {
+		names list
+		argv  list
+		cmd   string // expected command name
+		err   error  // expected error
+	}{
+		{list{"test"}, list{"test"}, "test", ErrNoCommand},
+		{list{"test"}, list{"test", "-h"}, "test", ErrHelp},
+		{list{"test", "cmd"}, list{"test", "cmd"}, "cmd", nil},
+		{list{"test", "cmd"}, list{"test", "a"}, "test", ErrUnknownCommand},
+		{list{"test", "cmd"}, list{"test", "cmd", "-h"}, "cmd", ErrHelp},
+	}
+
+	for _, test := range tests {
+		name := join(test.names) + ":" + join(test.argv)
+		t.Run(mkname(name), func(t *testing.T) {
+			main := build(test.names)
+
+			cmd, err := Parse(main, test.argv[1:])
+			if err != test.err {
+				t.Errorf("got error %v, want %v", err, test.err)
+			}
+			if cmd.Name != test.cmd {
+				t.Errorf("got command %q, want %q", cmd.Name, test.cmd)
+			}
+		})
+	}
+}
+
 // buildp returns a command tree, with the parent field set correctly.
 func buildp(tree []string) *Command {
 	var parent, cmd *Command
@@ -67,6 +98,25 @@ func buildp(tree []string) *Command {
 	}
 
 	return cmd
+}
+
+// build returns a command tree, with the Commands field set correctly.
+func build(tree []string) *Command {
+	// Traverse the tree in reverse order.
+	var child, cmd *Command
+	for i := len(tree) - 1; i >= 0; i-- {
+		cmd = &Command{Name: tree[i]}
+		if child != nil {
+			cmd.Commands = []*Command{child}
+		}
+		child = cmd
+	}
+
+	return cmd
+}
+
+func join(elems []string) string {
+	return strings.Join(elems, " ")
 }
 
 // mkname returns a suitable name to use for a sub test.
