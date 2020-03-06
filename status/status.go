@@ -2,7 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-package cmd
+// Package status provides support for a command running status.
+package status
 
 import (
 	"fmt"
