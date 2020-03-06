@@ -9,16 +9,18 @@ import (
 	"testing"
 )
 
+type list = []string
+
 // TestCommandLongName tests the Command.LongName method.
 func TestCommandLongName(t *testing.T) {
 	var tests = []struct {
-		names []string
+		names list
 		want  string
 	}{
-		{[]string{"test"}, ""},
-		{[]string{"test", "cmd"}, "cmd"},
-		{[]string{"test", "cmd", "a"}, "cmd a"},
-		{[]string{"test", "cmd", "a", "b"}, "cmd a b"},
+		{list{"test"}, ""},
+		{list{"test", "cmd"}, "cmd"},
+		{list{"test", "cmd", "a"}, "cmd a"},
+		{list{"test", "cmd", "a", "b"}, "cmd a b"},
 	}
 
 	for _, test := range tests {
@@ -35,13 +37,13 @@ func TestCommandLongName(t *testing.T) {
 // TestCommandString tests the Command.String method.
 func TestCommandString(t *testing.T) {
 	var tests = []struct {
-		names []string
+		names list
 		want  string
 	}{
-		{[]string{"test"}, "test"},
-		{[]string{"test", "cmd"}, "test cmd"},
-		{[]string{"test", "cmd", "a"}, "test cmd a"},
-		{[]string{"test", "cmd", "a", "b"}, "test cmd a b"},
+		{list{"test"}, "test"},
+		{list{"test", "cmd"}, "test cmd"},
+		{list{"test", "cmd", "a"}, "test cmd a"},
+		{list{"test", "cmd", "a", "b"}, "test cmd a b"},
 	}
 
 	for _, test := range tests {
