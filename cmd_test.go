@@ -71,6 +71,11 @@ func TestParse(t *testing.T) {
 		{list{"test", "cmd"}, list{"test", "cmd"}, "cmd", nil},
 		{list{"test", "cmd"}, list{"test", "a"}, "test", ErrUnknownCommand},
 		{list{"test", "cmd"}, list{"test", "cmd", "-h"}, "cmd", ErrHelp},
+
+		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1"}, "cmd1", ErrNoCommand},
+		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "cmd2"}, "cmd2", nil},
+		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "a"}, "cmd1", ErrUnknownCommand},
+		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "cmd2", "-h"}, "cmd2", ErrHelp},
 	}
 
 	for _, test := range tests {

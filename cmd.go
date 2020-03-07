@@ -160,7 +160,7 @@ func Parse(main *Command, argv []string) (*Command, error) {
 		return main, ErrNoCommand
 	}
 
-	// TODO(mperillo): Sub commands are not currently supported.
+MainLoop:
 	for _, cmd := range main.Commands {
 		if cmd.Name != args[0] {
 			continue
@@ -177,6 +177,22 @@ func Parse(main *Command, argv []string) (*Command, error) {
 		}
 		if err := cmd.Flag.Parse(args[1:]); err != nil {
 			return cmd, err
+		}
+		args = cmd.Flag.Args()
+
+		// Process sub commands after parsing the flags.
+		//
+		// If there are only flags after command, they will be consumed by
+		// cmd.Flag.Parse instead of being handled as regular arguments,
+		// resulting in an empty cmd.Flag.Args that will in turn cause Run to
+		// panic when handling ErrUnknownCommand.
+		if len(cmd.Commands) > 0 {
+			if len(args) == 0 {
+				return cmd, ErrNoCommand
+			}
+			main = cmd
+
+			goto MainLoop
 		}
 
 		return cmd, nil
