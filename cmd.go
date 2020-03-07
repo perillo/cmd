@@ -135,7 +135,8 @@ func (c *Command) usage() {
 }
 
 // Parse parses command-line from argument list, which should not include the
-// main command name, and return the invoked Command.
+// main command name, and return the invoked *Command, that will always be not
+// nil.
 //
 // If the main command has flags set, Parse will parse them but will continue
 // to handle the sub-commands in the command-line, instead of returning the
