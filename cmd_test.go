@@ -125,11 +125,45 @@ func TestParseCustomFlags(t *testing.T) {
 	if err != nil {
 		t.Errorf("unexpected error %v", err)
 	}
+
+	// Test that the sub-command flag has not been parsed.
 	if *flag {
 		t.Errorf("flag set")
 	}
 	if !reflect.DeepEqual(args, argv[2:]) {
 		t.Errorf("got arguments %q, want %q", args, argv[2:])
+	}
+}
+
+// TestParseMainFlagsSet tests the Parse function, when the main command has
+// flags set and additional sub commands.
+func TestParseMainFlagsSet(t *testing.T) {
+	tree := list{"test", "cmd"}
+	argv := list{"test", "-flag0", "cmd", "-flag1", "arg"}
+
+	main := build(tree)
+	flag0 := main.Flag.Bool("flag0", false, "flag0")
+	flag1 := main.Commands[0].Flag.Bool("flag1", false, "flag1")
+
+	cmd, err := Parse(main, argv[1:])
+	arg := cmd.Flag.Arg(0)
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+
+	// Test that the invoked command is the sub-command, and not the main
+	// command.
+	if cmd.Name != "cmd" {
+		t.Errorf("got command %q, want %q", cmd.Name, "cmd")
+	}
+	if !*flag0 {
+		t.Errorf("flag0 not set")
+	}
+	if !*flag1 {
+		t.Errorf("flag1 not set")
+	}
+	if arg != "arg" {
+		t.Errorf("got argument %q, want %q", arg, "arg")
 	}
 }
 
