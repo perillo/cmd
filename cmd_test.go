@@ -101,22 +101,35 @@ func TestParse(t *testing.T) {
 
 // TestParseFlag tests the Parse function, with a flag and an argument.
 func TestParseFlag(t *testing.T) {
-	tree := list{"test", "cmd"}
-	argv := list{"test", "cmd", "-flag", "arg"}
+	// Define variables to keep the test entries short.
+	cmd1 := list{"test", "cmd"}
 
-	main := build(tree)
-	flag := main.Commands[0].Flag.Bool("flag", false, "flag")
+	var tests = []struct {
+		names list
+		argv  list
+		depth int
+	}{
+		{cmd1, list{"test", "cmd", "-flag", "arg"}, 1},
+	}
 
-	cmd, err := Parse(main, argv[1:])
-	arg := cmd.Flag.Arg(0)
-	if err != nil {
-		t.Errorf("unexpected error %v", err)
-	}
-	if !*flag {
-		t.Errorf("flag not set")
-	}
-	if arg != "arg" {
-		t.Errorf("got argument %q, want %q", arg, "arg")
+	for _, test := range tests {
+		name := join(test.names) + ":" + join(test.argv)
+		t.Run(mkname(name), func(t *testing.T) {
+			main := build(test.names)
+			flag := find(main, test.depth).Flag.Bool("flag", false, "flag")
+
+			cmd, err := Parse(main, test.argv[1:])
+			arg := cmd.Flag.Arg(0)
+			if err != nil {
+				t.Errorf("unexpected error %v", err)
+			}
+			if !*flag {
+				t.Errorf("flag not set")
+			}
+			if arg != "arg" {
+				t.Errorf("got argument %q, want %q", arg, "arg")
+			}
+		})
 	}
 }
 
@@ -199,6 +212,17 @@ func build(tree []string) *Command {
 			cmd.Commands = []*Command{child}
 		}
 		child = cmd
+	}
+
+	return cmd
+}
+
+// find finds the sub-command of main at the specified depth.  A depth 0 will
+// return main.
+func find(main *Command, depth int) *Command {
+	cmd := main
+	for i := 0; i < depth; i++ {
+		cmd = cmd.Commands[0]
 	}
 
 	return cmd
