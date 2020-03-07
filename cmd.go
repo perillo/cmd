@@ -164,11 +164,13 @@ func Parse(main *Command, argv []string) (*Command, error) {
 		// Configure cmd.Flag as it was done with main.Flag.
 		defer configure(cmd)()
 		if cmd.CustomFlags {
-			args = args[1:]
-		} else {
-			if err := cmd.Flag.Parse(args[1:]); err != nil {
-				return cmd, err
-			}
+			// Prepend the "--" terminator to the argument list of the
+			// sub-command, so that Flag.Parse will treat flags as regular
+			// arguments.
+			args = append([]string{"", "--"}, args[1:]...)
+		}
+		if err := cmd.Flag.Parse(args[1:]); err != nil {
+			return cmd, err
 		}
 
 		return cmd, nil

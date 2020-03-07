@@ -5,6 +5,7 @@
 package cmd
 
 import (
+	"reflect"
 	"strings"
 	"testing"
 )
@@ -106,6 +107,29 @@ func TestParseFlag(t *testing.T) {
 	}
 	if arg != "arg" {
 		t.Errorf("got argument %q, want %q", arg, "arg")
+	}
+}
+
+// TestParseCustomFlags tests the Parse function, when the command has the
+// CustomFlags field set to true..
+func TestParseCustomFlags(t *testing.T) {
+	tree := list{"test", "cmd"}
+	argv := list{"test", "cmd", "-flag", "arg"}
+
+	main := build(tree)
+	main.Commands[0].CustomFlags = true
+	flag := main.Commands[0].Flag.Bool("flag", false, "flag")
+
+	cmd, err := Parse(main, argv[1:])
+	args := cmd.Flag.Args()
+	if err != nil {
+		t.Errorf("unexpected error %v", err)
+	}
+	if *flag {
+		t.Errorf("flag set")
+	}
+	if !reflect.DeepEqual(args, argv[2:]) {
+		t.Errorf("got arguments %q, want %q", args, argv[2:])
 	}
 }
 
