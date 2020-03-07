@@ -60,22 +60,27 @@ func TestCommandString(t *testing.T) {
 
 // TestParse tests the Parse function.
 func TestParse(t *testing.T) {
+	// Define variables to keep the test entries short.
+	cmd0 := list{"test"}
+	cmd1 := list{"test", "cmd"}
+	cmd2 := list{"test", "cmd1", "cmd2"}
+
 	var tests = []struct {
 		names list
 		argv  list
 		cmd   string // expected command name
 		err   error  // expected error
 	}{
-		{list{"test"}, list{"test"}, "test", ErrNoCommand},
-		{list{"test"}, list{"test", "-h"}, "test", ErrHelp},
-		{list{"test", "cmd"}, list{"test", "cmd"}, "cmd", nil},
-		{list{"test", "cmd"}, list{"test", "a"}, "test", ErrUnknownCommand},
-		{list{"test", "cmd"}, list{"test", "cmd", "-h"}, "cmd", ErrHelp},
+		{cmd0, list{"test"}, "test", ErrNoCommand},
+		{cmd0, list{"test", "-h"}, "test", ErrHelp},
+		{cmd1, list{"test", "cmd"}, "cmd", nil},
+		{cmd1, list{"test", "a"}, "test", ErrUnknownCommand},
+		{cmd1, list{"test", "cmd", "-h"}, "cmd", ErrHelp},
 
-		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1"}, "cmd1", ErrNoCommand},
-		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "cmd2"}, "cmd2", nil},
-		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "a"}, "cmd1", ErrUnknownCommand},
-		{list{"test", "cmd1", "cmd2"}, list{"test", "cmd1", "cmd2", "-h"}, "cmd2", ErrHelp},
+		{cmd2, list{"test", "cmd1"}, "cmd1", ErrNoCommand},
+		{cmd2, list{"test", "cmd1", "cmd2"}, "cmd2", nil},
+		{cmd2, list{"test", "cmd1", "a"}, "cmd1", ErrUnknownCommand},
+		{cmd2, list{"test", "cmd1", "cmd2", "-h"}, "cmd2", ErrHelp},
 	}
 
 	for _, test := range tests {
