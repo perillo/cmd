@@ -103,6 +103,7 @@ func TestParse(t *testing.T) {
 func TestParseFlag(t *testing.T) {
 	// Define variables to keep the test entries short.
 	cmd1 := list{"test", "cmd"}
+	cmd2 := list{"test", "cmd1", "cmd2"}
 
 	var tests = []struct {
 		names list
@@ -110,6 +111,7 @@ func TestParseFlag(t *testing.T) {
 		depth int
 	}{
 		{cmd1, list{"test", "cmd", "-flag", "arg"}, 1},
+		{cmd2, list{"test", "cmd1", "cmd2", "-flag", "arg"}, 2},
 	}
 
 	for _, test := range tests {
